@@ -1,0 +1,257 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   GUZ DIGITAL — sistema de diseño
+   Paleta: crema #F7F4EF · verde salvia #5C7367 · carbón #252525 · blanco
+   ========================================================================== */
+
+@theme {
+  --color-cream: #f7f4ef;
+  --color-sage: #5c7367;
+  --color-sage-dark: #4a5d53;
+  --color-charcoal: #252525;
+}
+
+/* ---- Tokens semánticos (tema claro) ---- */
+:root {
+  --bg: #f4f1ea;
+  --bg-grad-1: #efe9dd;
+  --bg-grad-2: #f7f4ef;
+  --surface: #ffffff;
+  --surface-2: #f3efe7;
+  --surface-hover: #efeae0;
+  --border: #e7e1d5;
+  --border-strong: #d9d2c4;
+  --text: #23241f;
+  --text-muted: #7a7669;
+  --primary: #5c7367;
+  --primary-hover: #506357;
+  --primary-soft: #e9efea;
+  --primary-contrast: #ffffff;
+  --ring: rgba(92, 115, 103, 0.32);
+  --shadow-sm: 0 1px 2px rgba(37, 37, 37, 0.06), 0 1px 3px rgba(37, 37, 37, 0.05);
+  --shadow-md: 0 4px 12px rgba(37, 37, 37, 0.07), 0 2px 4px rgba(37, 37, 37, 0.05);
+  --shadow-lg: 0 12px 32px rgba(37, 37, 37, 0.12), 0 4px 8px rgba(37, 37, 37, 0.06);
+
+  --ok: #16794c;
+  --ok-bg: #dcf1e6;
+  --warn: #9a6a12;
+  --warn-bg: #fbeecb;
+  --danger: #b0322b;
+  --danger-bg: #fbe0dd;
+  --info: #2456b8;
+  --info-bg: #dde8fb;
+  --neutral: #5a5a52;
+  --neutral-bg: #ececE6;
+}
+
+/* ---- Tema oscuro ---- */
+:root.dark {
+  --bg: #17181a;
+  --bg-grad-1: #1c1e20;
+  --bg-grad-2: #141517;
+  --surface: #212326;
+  --surface-2: #2a2d30;
+  --surface-hover: #303337;
+  --border: #34383c;
+  --border-strong: #40454a;
+  --text: #f1efe9;
+  --text-muted: #9a9d99;
+  --primary: #8aa89a;
+  --primary-hover: #9bb6a9;
+  --primary-soft: #263029;
+  --primary-contrast: #15201a;
+  --ring: rgba(138, 168, 154, 0.38);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+
+  --ok: #6ee7a8;
+  --ok-bg: #16281f;
+  --warn: #f4c874;
+  --warn-bg: #2c2411;
+  --danger: #f7a19a;
+  --danger-bg: #2e1715;
+  --info: #9dc0f7;
+  --info-bg: #16233c;
+  --neutral: #b6b8b2;
+  --neutral-bg: #2b2e31;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-primary: var(--primary);
+  --color-primary-contrast: var(--primary-contrast);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  color: var(--text);
+  background-color: var(--bg);
+  background-image: radial-gradient(
+      1200px 600px at 100% -10%,
+      var(--bg-grad-1),
+      transparent 60%
+    ),
+    radial-gradient(900px 500px at -10% 110%, var(--bg-grad-2), transparent 55%);
+  background-attachment: fixed;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, "Apple Color Emoji", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4 {
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+::selection {
+  background: var(--primary-soft);
+}
+
+/* ---- Botones ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 46px;
+  padding: 0.7rem 1.15rem;
+  border-radius: 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease,
+    transform 0.08s ease, filter 0.15s ease, border-color 0.15s ease;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--ring);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-contrast);
+  box-shadow: var(--shadow-sm);
+}
+.btn-primary:not(:disabled):hover {
+  background: var(--primary-hover);
+  box-shadow: var(--shadow-md);
+}
+.btn-secondary {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border);
+}
+.btn-secondary:not(:disabled):hover {
+  background: var(--surface-hover);
+}
+.btn-outline {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.btn-outline:not(:disabled):hover {
+  background: var(--surface-2);
+}
+.btn-danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+/* ---- Tarjetas ---- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1.15rem;
+  box-shadow: var(--shadow-sm);
+}
+.card-hover {
+  transition: box-shadow 0.18s ease, transform 0.12s ease, border-color 0.18s ease;
+}
+.card-hover:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+}
+
+/* ---- Formularios ---- */
+.input,
+select.input,
+textarea.input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.7rem 0.9rem;
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: 0.85rem;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  appearance: none;
+}
+.input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+.label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+}
+
+/* ---- Badges de estado ---- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* ---- Utilidades ---- */
+.muted { color: var(--text-muted); }
+.divider { height: 1px; background: var(--border); }
+
+/* Scrollbar sutil */
+::-webkit-scrollbar { height: 8px; width: 8px; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
