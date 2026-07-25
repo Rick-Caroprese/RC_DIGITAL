@@ -23,7 +23,7 @@ export async function GET() {
   const { start, end } = bogotaWeekRange();
   const { data } = await supabase
     .from("assignments")
-    .select("*, profiles(full_name, email), posts(instagram_url, tiktok_url), task_completions(platform, link_opened_at, completed_at, completion_status)")
+    .select("*, profiles(full_name, email), posts(instagram_url, tiktok_url, status), task_completions(platform, link_opened_at, completed_at, completion_status)")
     .gte("assigned_datetime", start.toISOString())
     .lt("assigned_datetime", end.toISOString());
 

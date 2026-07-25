@@ -27,12 +27,12 @@ export default async function AdminHome() {
     supabase.from("posts").select("*").gt("publication_datetime", now.toISOString()).order("publication_datetime", { ascending: true }).limit(1),
     supabase
       .from("assignments")
-      .select("*, posts(instagram_url, tiktok_url), task_completions(platform, link_opened_at, completed_at, completion_status)")
+      .select("*, posts(instagram_url, tiktok_url, status), task_completions(platform, link_opened_at, completed_at, completion_status)")
       .gte("assigned_datetime", todayStart)
       .lt("assigned_datetime", todayEnd),
     supabase
       .from("assignments")
-      .select("*, profiles(full_name, email), posts(instagram_url, tiktok_url), task_completions(platform, link_opened_at, completed_at, completion_status)")
+      .select("*, profiles(full_name, email), posts(instagram_url, tiktok_url, status), task_completions(platform, link_opened_at, completed_at, completion_status)")
       .gte("assigned_datetime", weekStart.toISOString())
       .lt("assigned_datetime", weekEnd.toISOString()),
   ]);
@@ -40,6 +40,7 @@ export default async function AdminHome() {
   let pendingToday = 0;
   let overdueToday = 0;
   for (const r of (todayRows ?? []) as WeeklyRow[]) {
+    if (r.posts?.status === "draft") continue; // pausadas no cuentan
     const v = buildAssignmentView(r, r.posts ?? { instagram_url: null, tiktok_url: null }, r.task_completions, now);
     if (v.effectiveStatus === "available" || v.effectiveStatus === "scheduled") pendingToday++;
     if (v.effectiveStatus === "missed") overdueToday++;

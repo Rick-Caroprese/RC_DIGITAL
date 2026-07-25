@@ -3,6 +3,7 @@ import { requireMember } from "@/lib/auth";
 import {
   MEMBER_ASSIGNMENT_SELECT,
   toTaskCardData,
+  isVisibleToMember,
   type MemberAssignmentRow,
 } from "@/lib/memberData";
 import TaskCard from "@/components/TaskCard";
@@ -19,7 +20,7 @@ export default async function MemberTasks() {
     .eq("user_id", profile.id)
     .order("assigned_datetime", { ascending: false });
 
-  const rows = (data ?? []) as MemberAssignmentRow[];
+  const rows = ((data ?? []) as MemberAssignmentRow[]).filter(isVisibleToMember);
   const now = new Date();
   const cards = rows.map((r) => toTaskCardData(r, now));
 

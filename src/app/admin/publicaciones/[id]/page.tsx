@@ -12,6 +12,7 @@ import { buildAssignmentView } from "@/lib/assignmentView";
 import { PostBadge, AssignmentBadge } from "@/components/StatusBadge";
 import GenerateButton from "./GenerateButton";
 import RowActions from "./RowActions";
+import PostAdminControls from "./PostAdminControls";
 
 type Row = Assignment & {
   profiles: { full_name: string; email: string } | null;
@@ -77,6 +78,9 @@ export default async function PostDetailPage({
             ))}
           </div>
         )}
+        <div className="mt-4 border-t pt-4" style={{ borderColor: "var(--border)" }}>
+          <PostAdminControls postId={p.id} status={p.status} />
+        </div>
       </div>
 
       <div className="flex items-center justify-between">

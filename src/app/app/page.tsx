@@ -4,6 +4,7 @@ import { bogotaDayKey } from "@/lib/datetime";
 import {
   MEMBER_ASSIGNMENT_SELECT,
   toTaskCardData,
+  isVisibleToMember,
   type MemberAssignmentRow,
 } from "@/lib/memberData";
 import TaskCard from "@/components/TaskCard";
@@ -25,7 +26,7 @@ export default async function MemberToday() {
     .lt("assigned_datetime", end)
     .order("assigned_datetime", { ascending: true });
 
-  const rows = (data ?? []) as MemberAssignmentRow[];
+  const rows = ((data ?? []) as MemberAssignmentRow[]).filter(isVisibleToMember);
   const now = new Date();
 
   return (

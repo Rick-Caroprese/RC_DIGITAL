@@ -149,6 +149,78 @@ export async function deletePost(postId: string): Promise<Result> {
   }
 }
 
+// Editar una publicación existente. No regenera horarios automáticamente:
+// si cambian fecha/intervalo/ventana, el admin usa "Regenerar horarios".
+export async function updatePost(_prev: unknown, formData: FormData): Promise<Result> {
+  try {
+    await assertAdmin();
+  } catch {
+    return { ok: false, error: "No autorizado" };
+  }
+
+  const id = String(formData.get("id") || "");
+  const title = String(formData.get("title") || "").trim();
+  const description = String(formData.get("description") || "").trim() || null;
+  const instagram_url = String(formData.get("instagram_url") || "").trim() || null;
+  const tiktok_url = String(formData.get("tiktok_url") || "").trim() || null;
+  const date = String(formData.get("date") || "");
+  const time = String(formData.get("time") || "");
+  const interval_minutes = Number(formData.get("interval_minutes") || 20);
+  const completion_window_minutes = Number(formData.get("completion_window_minutes") || 40);
+  const status = String(formData.get("status") || "draft");
+  const requested_actions = formData
+    .getAll("requested_actions")
+    .map((x) => String(x))
+    .filter(Boolean);
+
+  if (!id) return { ok: false, error: "Publicación no válida." };
+  if (!title) return { ok: false, error: "El título es obligatorio." };
+  if (!instagram_url && !tiktok_url)
+    return { ok: false, error: "Agrega al menos un enlace (Instagram o TikTok)." };
+  if (!date || !time) return { ok: false, error: "Indica fecha y hora de publicación." };
+  if (interval_minutes <= 0 || completion_window_minutes <= 0)
+    return { ok: false, error: "El intervalo y la ventana deben ser mayores que 0." };
+
+  const publicationIso = bogotaLocalToUtcIso(date, time);
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("posts")
+    .update({
+      title,
+      description,
+      instagram_url,
+      tiktok_url,
+      requested_actions,
+      publication_datetime: publicationIso,
+      interval_minutes,
+      completion_window_minutes,
+      status,
+    })
+    .eq("id", id);
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/admin/publicaciones");
+  revalidatePath(`/admin/publicaciones/${id}`);
+  return { ok: true, postId: id };
+}
+
+// Cambiar solo el estado (pausar = draft, reanudar = active, finalizar, etc.).
+export async function updatePostStatus(
+  postId: string,
+  status: "draft" | "scheduled" | "active" | "finished",
+): Promise<Result> {
+  try {
+    const { supabase } = await assertAdmin();
+    const { error } = await supabase.from("posts").update({ status }).eq("id", postId);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath("/admin/publicaciones");
+    revalidatePath(`/admin/publicaciones/${postId}`);
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "No autorizado" };
+  }
+}
+
 // --- Generación de horarios (rotación balanceada) --------------------------
 export async function generatePostSchedule(postId: string): Promise<Result> {
   let supabase;

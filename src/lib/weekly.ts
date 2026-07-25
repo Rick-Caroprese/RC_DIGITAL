@@ -3,7 +3,7 @@ import { buildAssignmentView } from "./assignmentView";
 
 export type WeeklyRow = Assignment & {
   profiles: { full_name: string; email: string } | null;
-  posts: Pick<Post, "instagram_url" | "tiktok_url"> | null;
+  posts: Pick<Post, "instagram_url" | "tiktok_url" | "status"> | null;
   task_completions: Pick<
     TaskCompletion,
     "platform" | "link_opened_at" | "completed_at" | "completion_status"
@@ -32,6 +32,8 @@ export function computeWeekly(rows: WeeklyRow[], now: Date = new Date()): Weekly
   const byUser = new Map<string, WeeklyStat>();
 
   for (const r of rows) {
+    // Las publicaciones pausadas (borrador) no cuentan para el cumplimiento.
+    if (r.posts?.status === "draft") continue;
     const key = r.user_id;
     if (!byUser.has(key)) {
       byUser.set(key, {

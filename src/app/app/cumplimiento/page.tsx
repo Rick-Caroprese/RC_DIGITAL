@@ -10,7 +10,7 @@ export default async function MemberCompliance() {
 
   const { data } = await supabase
     .from("assignments")
-    .select("*, profiles(full_name, email), posts(instagram_url, tiktok_url), task_completions(platform, link_opened_at, completed_at, completion_status)")
+    .select("*, profiles(full_name, email), posts(instagram_url, tiktok_url, status), task_completions(platform, link_opened_at, completed_at, completion_status)")
     .eq("user_id", profile.id)
     .gte("assigned_datetime", start.toISOString())
     .lt("assigned_datetime", end.toISOString());
