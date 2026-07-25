@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { generateSchedule } from "@/lib/rotation";
+import { generateAccountSchedule } from "@/lib/rotation";
 import type { Profile } from "@/lib/types";
 
 // Verifica en el servidor que quien llama es admin activo. No confiar en el UI.
@@ -96,7 +96,7 @@ export async function createPost(_prev: unknown, formData: FormData): Promise<Re
   const tiktok_url = String(formData.get("tiktok_url") || "").trim() || null;
   const date = String(formData.get("date") || ""); // YYYY-MM-DD
   const time = String(formData.get("time") || ""); // HH:mm
-  const interval_minutes = Number(formData.get("interval_minutes") || 20);
+  const total_window_minutes = Number(formData.get("total_window_minutes") || 480);
   const completion_window_minutes = Number(formData.get("completion_window_minutes") || 40);
   const status = String(formData.get("status") || "draft");
   const requested_actions = formData
@@ -108,8 +108,8 @@ export async function createPost(_prev: unknown, formData: FormData): Promise<Re
   if (!instagram_url && !tiktok_url)
     return { ok: false, error: "Agrega al menos un enlace (Instagram o TikTok)." };
   if (!date || !time) return { ok: false, error: "Indica fecha y hora de publicación." };
-  if (interval_minutes <= 0 || completion_window_minutes <= 0)
-    return { ok: false, error: "El intervalo y la ventana deben ser mayores que 0." };
+  if (total_window_minutes <= 0 || completion_window_minutes <= 0)
+    return { ok: false, error: "La ventana total y el tiempo para completar deben ser mayores que 0." };
 
   // Bogotá es UTC-5 fijo -> convertimos "fecha hora" local a UTC.
   const publicationIso = bogotaLocalToUtcIso(date, time);
@@ -124,7 +124,7 @@ export async function createPost(_prev: unknown, formData: FormData): Promise<Re
       tiktok_url,
       requested_actions,
       publication_datetime: publicationIso,
-      interval_minutes,
+      total_window_minutes,
       completion_window_minutes,
       status,
       created_by: profileId,
@@ -165,7 +165,7 @@ export async function updatePost(_prev: unknown, formData: FormData): Promise<Re
   const tiktok_url = String(formData.get("tiktok_url") || "").trim() || null;
   const date = String(formData.get("date") || "");
   const time = String(formData.get("time") || "");
-  const interval_minutes = Number(formData.get("interval_minutes") || 20);
+  const total_window_minutes = Number(formData.get("total_window_minutes") || 480);
   const completion_window_minutes = Number(formData.get("completion_window_minutes") || 40);
   const status = String(formData.get("status") || "draft");
   const requested_actions = formData
@@ -178,8 +178,8 @@ export async function updatePost(_prev: unknown, formData: FormData): Promise<Re
   if (!instagram_url && !tiktok_url)
     return { ok: false, error: "Agrega al menos un enlace (Instagram o TikTok)." };
   if (!date || !time) return { ok: false, error: "Indica fecha y hora de publicación." };
-  if (interval_minutes <= 0 || completion_window_minutes <= 0)
-    return { ok: false, error: "El intervalo y la ventana deben ser mayores que 0." };
+  if (total_window_minutes <= 0 || completion_window_minutes <= 0)
+    return { ok: false, error: "La ventana total y el tiempo para completar deben ser mayores que 0." };
 
   const publicationIso = bogotaLocalToUtcIso(date, time);
   const supabase = await createClient();
@@ -192,7 +192,7 @@ export async function updatePost(_prev: unknown, formData: FormData): Promise<Re
       tiktok_url,
       requested_actions,
       publication_datetime: publicationIso,
-      interval_minutes,
+      total_window_minutes,
       completion_window_minutes,
       status,
     })
@@ -221,7 +221,7 @@ export async function updatePostStatus(
   }
 }
 
-// --- Generación de horarios (rotación balanceada) --------------------------
+// --- Generación de horarios por cuenta (reparto anti-patrón) ---------------
 export async function generatePostSchedule(postId: string): Promise<Result> {
   let supabase;
   try {
@@ -238,17 +238,36 @@ export async function generatePostSchedule(postId: string): Promise<Result> {
     .single();
   if (postErr || !post) return { ok: false, error: "Publicación no encontrada." };
 
-  // Integrantes activos, orden estable por fecha de creación.
+  // Integrantes activos (orden estable) con sus cuentas activas.
   const { data: members } = await supabase
     .from("profiles")
     .select("id")
     .eq("role", "member")
     .eq("status", "active")
     .order("created_at", { ascending: true });
-
-  const activeUserIds = (members ?? []).map((m) => m.id);
-  if (activeUserIds.length === 0)
+  const memberIds = (members ?? []).map((m) => m.id);
+  if (memberIds.length === 0)
     return { ok: false, error: "No hay integrantes activos." };
+
+  const { data: accounts } = await supabase
+    .from("member_accounts")
+    .select("id, user_id, position")
+    .eq("active", true)
+    .in("user_id", memberIds)
+    .order("position", { ascending: true });
+
+  // Agrupar cuentas por integrante, conservando el orden estable de integrantes.
+  const byUser = new Map<string, string[]>();
+  for (const uid of memberIds) byUser.set(uid, []);
+  for (const acc of accounts ?? []) {
+    byUser.get(acc.user_id)?.push(acc.id);
+  }
+  const peopleAccounts = memberIds
+    .map((uid) => ({ userId: uid, accountIds: byUser.get(uid) ?? [] }))
+    .filter((p) => p.accountIds.length > 0);
+
+  if (peopleAccounts.length === 0)
+    return { ok: false, error: "Los integrantes activos no tienen cuentas registradas." };
 
   // Estado de rotación global
   const { data: rot } = await supabase
@@ -258,10 +277,11 @@ export async function generatePostSchedule(postId: string): Promise<Result> {
     .single();
   const rotationIndex = rot?.last_rotation_index ?? 0;
 
-  const slots = generateSchedule({
-    activeUserIds,
+  const totalWindow = post.total_window_minutes ?? 480;
+  const slots = generateAccountSchedule({
+    peopleAccounts,
     publicationDatetime: new Date(post.publication_datetime),
-    intervalMinutes: post.interval_minutes,
+    totalWindowMinutes: totalWindow,
     completionWindowMinutes: post.completion_window_minutes,
     rotationIndex,
   });
@@ -272,6 +292,7 @@ export async function generatePostSchedule(postId: string): Promise<Result> {
   const rows = slots.map((s) => ({
     post_id: postId,
     user_id: s.userId,
+    account_id: s.accountId,
     assigned_datetime: s.assignedDatetime.toISOString(),
     deadline_datetime: s.deadlineDatetime.toISOString(),
     rotation_position: s.rotationPosition,
@@ -290,10 +311,11 @@ export async function generatePostSchedule(postId: string): Promise<Result> {
     })
     .eq("id", 1);
 
-  // Notificación in-app "Nueva tarea asignada" a cada integrante.
+  // Notificación in-app "Nueva tarea asignada" (una por integrante).
+  const uniqueUsers = [...new Set(slots.map((s) => s.userId))];
   await supabase.from("notifications").insert(
-    slots.map((s) => ({
-      user_id: s.userId,
+    uniqueUsers.map((uid) => ({
+      user_id: uid,
       title: "Nueva tarea asignada",
       message: `Publicación: ${post.title}`,
     })),
@@ -302,6 +324,85 @@ export async function generatePostSchedule(postId: string): Promise<Result> {
   revalidatePath(`/admin/publicaciones/${postId}`);
   revalidatePath("/admin");
   return { ok: true };
+}
+
+// --- Cuentas de un integrante ----------------------------------------------
+export async function createAccount(_prev: unknown, formData: FormData): Promise<Result> {
+  try {
+    const { supabase } = await assertAdmin();
+    const user_id = String(formData.get("user_id") || "");
+    const label = String(formData.get("label") || "").trim();
+    const instagram_handle = String(formData.get("instagram_handle") || "").trim().replace(/^@/, "") || null;
+    const tiktok_handle = String(formData.get("tiktok_handle") || "").trim().replace(/^@/, "") || null;
+    if (!user_id || !label) return { ok: false, error: "Falta el nombre de la cuenta." };
+    if (!instagram_handle && !tiktok_handle)
+      return { ok: false, error: "Agrega al menos un usuario (IG o TikTok)." };
+
+    // posición = siguiente
+    const { count } = await supabase
+      .from("member_accounts")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user_id);
+
+    const { error } = await supabase.from("member_accounts").insert({
+      user_id,
+      label,
+      instagram_handle,
+      tiktok_handle,
+      position: count ?? 0,
+      active: true,
+    });
+    if (error) return { ok: false, error: error.message };
+    revalidatePath(`/admin/integrantes/${user_id}`);
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "No autorizado" };
+  }
+}
+
+export async function updateAccount(
+  accountId: string,
+  data: { label?: string; instagram_handle?: string | null; tiktok_handle?: string | null },
+): Promise<Result> {
+  try {
+    const { supabase } = await assertAdmin();
+    const patch: Record<string, unknown> = {};
+    if (data.label !== undefined) patch.label = data.label.trim();
+    if (data.instagram_handle !== undefined)
+      patch.instagram_handle = data.instagram_handle?.trim().replace(/^@/, "") || null;
+    if (data.tiktok_handle !== undefined)
+      patch.tiktok_handle = data.tiktok_handle?.trim().replace(/^@/, "") || null;
+    const { error } = await supabase.from("member_accounts").update(patch).eq("id", accountId);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath("/admin/integrantes");
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "No autorizado" };
+  }
+}
+
+export async function setAccountActive(accountId: string, active: boolean): Promise<Result> {
+  try {
+    const { supabase } = await assertAdmin();
+    const { error } = await supabase.from("member_accounts").update({ active }).eq("id", accountId);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath("/admin/integrantes");
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "No autorizado" };
+  }
+}
+
+export async function deleteAccount(accountId: string): Promise<Result> {
+  try {
+    const { supabase } = await assertAdmin();
+    const { error } = await supabase.from("member_accounts").delete().eq("id", accountId);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath("/admin/integrantes");
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "No autorizado" };
+  }
 }
 
 // --- Edición manual de un horario ------------------------------------------

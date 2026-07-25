@@ -66,14 +66,27 @@ export default function PostForm() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="label" htmlFor="interval_minutes">Tiempo entre integrantes (min)</label>
-          <input id="interval_minutes" name="interval_minutes" type="number" min={1} defaultValue={20} required className="input" />
+          <label className="label" htmlFor="total_window_minutes">Ventana total (cuánto dura todo)</label>
+          <select id="total_window_minutes" name="total_window_minutes" className="input" defaultValue={480}>
+            <option value={60}>1 hora</option>
+            <option value={120}>2 horas</option>
+            <option value={180}>3 horas</option>
+            <option value={240}>4 horas</option>
+            <option value={360}>6 horas</option>
+            <option value={480}>8 horas</option>
+            <option value={600}>10 horas</option>
+            <option value={720}>12 horas</option>
+          </select>
         </div>
         <div>
-          <label className="label" htmlFor="completion_window_minutes">Tiempo máximo para completar (min)</label>
+          <label className="label" htmlFor="completion_window_minutes">Margen por cuenta para completar (min)</label>
           <input id="completion_window_minutes" name="completion_window_minutes" type="number" min={1} defaultValue={40} required className="input" />
         </div>
       </div>
+      <p className="rounded-lg p-3 text-xs" style={{ backgroundColor: "var(--surface-2)", color: "var(--text-muted)" }}>
+        El sistema reparte automáticamente todas las cuentas dentro de la ventana
+        total, separando las cuentas de una misma persona para evitar patrones.
+      </p>
 
       <div>
         <span className="label">Acciones solicitadas (solo instrucciones)</span>

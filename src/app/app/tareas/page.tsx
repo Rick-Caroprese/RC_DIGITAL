@@ -67,7 +67,10 @@ function CompactList({
         cards.map((c) => (
           <div key={c.assignmentId} className="card flex items-center justify-between p-3">
             <div>
-              <p className="font-medium">{c.title}</p>
+              <p className="font-medium">
+                {c.accountLabel ? <span style={{ color: "var(--primary)" }}>{c.accountLabel} · </span> : null}
+                {c.title}
+              </p>
               <p className="text-xs" style={{ color: "var(--text-muted)" }}>
                 {formatDateTimeBogota(c.assignedIso)}
               </p>

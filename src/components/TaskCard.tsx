@@ -13,6 +13,9 @@ export interface TaskCardData {
   title: string;
   description: string | null;
   requestedActions: string[];
+  accountLabel: string | null;
+  accountInstagram: string | null;
+  accountTiktok: string | null;
   assignedIso: string;
   deadlineIso: string;
   effectiveStatus: AssignmentStatus;
@@ -86,6 +89,14 @@ export default function TaskCard({ data }: { data: TaskCardData }) {
     <div className="card p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
+          {data.accountLabel && (
+            <span
+              className="badge mb-1"
+              style={{ background: "var(--primary-soft)", color: "var(--primary)" }}
+            >
+              {data.accountLabel}
+            </span>
+          )}
           <h3 className="font-semibold leading-tight">{data.title}</h3>
           <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
             Tu horario: <b>{formatTimeBogota(data.assignedIso)}</b> · Límite:{" "}
@@ -121,7 +132,14 @@ export default function TaskCard({ data }: { data: TaskCardData }) {
           return (
             <div key={platform} className="rounded-xl border p-3" style={{ borderColor: "var(--border)" }}>
               <div className="mb-2 flex items-center justify-between">
-                <span className="font-medium">{PLATFORM_LABEL[platform]}</span>
+                <span className="font-medium">
+                  {PLATFORM_LABEL[platform]}
+                  {(platform === "instagram" ? data.accountInstagram : data.accountTiktok) && (
+                    <span className="ml-1.5 text-sm font-normal" style={{ color: "var(--text-muted)" }}>
+                      @{platform === "instagram" ? data.accountInstagram : data.accountTiktok}
+                    </span>
+                  )}
+                </span>
                 {done ? (
                   <span className="text-sm" style={{ color: ps.onTime === false ? "var(--status-late)" : "var(--status-done)" }}>
                     {ps.onTime === false ? "Confirmado (tarde)" : "Confirmado ✓"}

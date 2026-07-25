@@ -29,6 +29,18 @@ export interface Profile {
   updated_at: string;
 }
 
+export interface MemberAccount {
+  id: string;
+  user_id: string;
+  label: string;
+  instagram_handle: string | null;
+  tiktok_handle: string | null;
+  position: number;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Post {
   id: string;
   title: string;
@@ -39,6 +51,7 @@ export interface Post {
   publication_datetime: string; // timestamptz (UTC)
   interval_minutes: number;
   completion_window_minutes: number;
+  total_window_minutes: number | null; // ventana total para repartir las cuentas
   status: PostStatus;
   created_by: string;
   created_at: string;
@@ -49,6 +62,7 @@ export interface Assignment {
   id: string;
   post_id: string;
   user_id: string;
+  account_id: string | null; // cuenta (member_accounts) a la que pertenece el turno
   assigned_datetime: string; // timestamptz (UTC)
   deadline_datetime: string; // timestamptz (UTC)
   rotation_position: number; // 0-based

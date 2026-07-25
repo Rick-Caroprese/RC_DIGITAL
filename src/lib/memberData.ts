@@ -7,6 +7,11 @@ export type MemberAssignmentRow = Assignment & {
     Post,
     "title" | "description" | "requested_actions" | "instagram_url" | "tiktok_url" | "status"
   > | null;
+  member_accounts: {
+    label: string;
+    instagram_handle: string | null;
+    tiktok_handle: string | null;
+  } | null;
   task_completions: Pick<
     TaskCompletion,
     "platform" | "link_opened_at" | "completed_at" | "completion_status"
@@ -15,7 +20,7 @@ export type MemberAssignmentRow = Assignment & {
 
 // Columnas que necesita la vista del integrante.
 export const MEMBER_ASSIGNMENT_SELECT =
-  "*, posts(title, description, requested_actions, instagram_url, tiktok_url, status), task_completions(platform, link_opened_at, completed_at, completion_status)";
+  "*, posts(title, description, requested_actions, instagram_url, tiktok_url, status), member_accounts(label, instagram_handle, tiktok_handle), task_completions(platform, link_opened_at, completed_at, completion_status)";
 
 // Una publicación es visible para el integrante solo si está programada o activa.
 // Pausada (borrador) o finalizada => se oculta.
@@ -41,11 +46,15 @@ export function toTaskCardData(
     row.task_completions,
     now,
   );
+  const acc = row.member_accounts;
   return {
     assignmentId: row.id,
     title: post.title,
     description: post.description,
     requestedActions: post.requested_actions ?? [],
+    accountLabel: acc?.label ?? null,
+    accountInstagram: acc?.instagram_handle ?? null,
+    accountTiktok: acc?.tiktok_handle ?? null,
     assignedIso: row.assigned_datetime,
     deadlineIso: row.deadline_datetime,
     effectiveStatus: view.effectiveStatus,

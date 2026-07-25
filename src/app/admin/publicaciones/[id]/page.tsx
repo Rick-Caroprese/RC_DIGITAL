@@ -16,6 +16,7 @@ import PostAdminControls from "./PostAdminControls";
 
 type Row = Assignment & {
   profiles: { full_name: string; email: string } | null;
+  member_accounts: { label: string; instagram_handle: string | null; tiktok_handle: string | null } | null;
   task_completions: Pick<
     TaskCompletion,
     "platform" | "link_opened_at" | "completed_at" | "completion_status"
@@ -46,7 +47,7 @@ export default async function PostDetailPage({
 
   const { data: assignmentsData } = await supabase
     .from("assignments")
-    .select("*, profiles(full_name, email), task_completions(platform, link_opened_at, completed_at, completion_status)")
+    .select("*, profiles(full_name, email), member_accounts(label, instagram_handle, tiktok_handle), task_completions(platform, link_opened_at, completed_at, completion_status)")
     .eq("post_id", id)
     .order("rotation_position", { ascending: true });
   const rows = (assignmentsData ?? []) as Row[];
@@ -99,6 +100,7 @@ export default async function PostDetailPage({
               <thead>
                 <tr style={{ backgroundColor: "var(--surface-2)" }}>
                   <th className="px-3 py-3 text-left font-semibold">Integrante</th>
+                  <th className="px-3 py-3 text-left font-semibold">Cuenta</th>
                   <th className="px-3 py-3 text-left font-semibold">Horario</th>
                   <th className="px-3 py-3 text-left font-semibold">Instagram</th>
                   <th className="px-3 py-3 text-left font-semibold">TikTok</th>
@@ -113,6 +115,13 @@ export default async function PostDetailPage({
                   return (
                     <tr key={r.id} className="border-t" style={{ borderColor: "var(--border)" }}>
                       <td className="px-3 py-3 font-medium">{r.profiles?.full_name || r.profiles?.email || "—"}</td>
+                      <td className="px-3 py-3">
+                        <div className="font-medium">{r.member_accounts?.label || "—"}</div>
+                        <div className="text-xs" style={{ color: "var(--text-muted)" }}>
+                          {r.member_accounts?.instagram_handle ? `@${r.member_accounts.instagram_handle}` : ""}
+                          {r.member_accounts?.tiktok_handle ? ` · @${r.member_accounts.tiktok_handle}` : ""}
+                        </div>
+                      </td>
                       <td className="px-3 py-3 whitespace-nowrap">{formatTimeBogota(r.assigned_datetime)}</td>
                       <td className="px-3 py-3"><PlatformCell {...view.platforms.instagram} /></td>
                       <td className="px-3 py-3"><PlatformCell {...view.platforms.tiktok} /></td>
