@@ -82,7 +82,7 @@ function LoginForm() {
         </form>
 
         <p className="mt-6 text-center text-xs muted">
-          Herramienta interna del equipo · QUBICA Marketing
+          Herramienta interna del equipo · Qubika Studio
         </p>
       </div>
     </main>

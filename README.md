@@ -1,4 +1,4 @@
-# NU Digital Team
+# Qubika Studio
 
 Aplicación web interna para **organizar y controlar** las tareas de un equipo
 pequeño (6–10 personas) que apoya manualmente las publicaciones de Instagram y

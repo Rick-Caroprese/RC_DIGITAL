@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "QUBICA Marketing",
+  title: "Qubika Studio",
   description:
     "Herramienta interna de organización y control de tareas del equipo.",
 };
