@@ -157,7 +157,7 @@ export default function TaskCard({ data }: { data: TaskCardData }) {
                 </button>
                 <button
                   onClick={() => setModal(platform)}
-                  disabled={done || !available}
+                  disabled={done || beforeStart}
                   className="btn btn-primary text-sm"
                 >
                   {done ? "Confirmado" : `Confirmar ${PLATFORM_LABEL[platform]}`}
@@ -169,8 +169,8 @@ export default function TaskCard({ data }: { data: TaskCardData }) {
       </div>
 
       {!available && !beforeStart && data.effectiveStatus === "missed" && (
-        <p className="mt-3 text-sm" style={{ color: "var(--status-missed)" }}>
-          El tiempo para completar esta tarea venció.
+        <p className="mt-3 text-sm" style={{ color: "var(--danger)" }}>
+          El tiempo límite venció. Igual puedes confirmar, pero quedará registrada como fuera de tiempo.
         </p>
       )}
 
